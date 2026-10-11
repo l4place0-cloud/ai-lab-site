@@ -1,0 +1,11 @@
+# Build artifacts for the showcase site.
+node_modules/
+_snapshots/
+_shots/
+
+# The content repository is expected as a sibling checkout, not vendored here.
+ai-lab/
+ai-benchmark/
+
+.DS_Store
+Thumbs.db

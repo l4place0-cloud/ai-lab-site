@@ -1,0 +1,62 @@
+name: Build and deploy site
+
+on:
+  push:
+    branches: [main]
+  # Rebuild when the content repository changes, and allow manual runs.
+  repository_dispatch:
+    types: [content-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout site
+        uses: actions/checkout@v4
+
+      # The site is a consumer of the content repo, so check that out too.
+      - name: Checkout content repository
+        uses: actions/checkout@v4
+        with:
+          repository: l4place0/ai-lab
+          path: content
+          lfs: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Copy cover thumbnails
+        env:
+          CONTENT_REPO: ${{ github.workspace }}/content
+        run: node src/covers.mjs
+
+      - name: Build site
+        env:
+          CONTENT_REPO: ${{ github.workspace }}/content
+        run: node src/build.mjs
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

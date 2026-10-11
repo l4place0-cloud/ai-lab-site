@@ -1,0 +1,16 @@
+{
+  "name": "ai-lab-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Showcase site for the AI Lab benchmark content repository",
+  "scripts": {
+    "covers": "node src/covers.mjs",
+    "build": "node src/build.mjs",
+    "preview": "node src/serve.mjs public 4599",
+    "rebuild": "node src/covers.mjs && node src/build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
