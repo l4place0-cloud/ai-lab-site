@@ -180,9 +180,11 @@ function renderDetail(item, manifest) {
   const repoLink = `${REPO_BASE}/tree/main/${item.path.split('/').map(encodeURIComponent).join('/')}`;
   const docLink = `${RAW_BASE}/${(item.path + '/README.md').split('/').map(encodeURIComponent).join('/')}`;
 
-  // Embed the demo when this site actually ships a local copy of it.
-  const localDemo = join(publicDir, 'demos', item.id, 'index.html');
-  const embeddable = existsSync(localDemo);
+  // Embed the demo when this site actually ships a local copy of it. Demos are
+  // published at /demos/<id>/, a sibling of the /p/ detail pages, so the
+  // reference must climb out of /p/ before descending.
+  const embeddable = existsSync(join(publicDir, 'demos', item.id, 'index.html'));
+  const demoHref = `../demos/${item.id}/index.html`;
 
   const siblings = manifest.items.filter((i) => i.model === item.model && i.task === item.task && i.id !== item.id);
 
@@ -200,9 +202,9 @@ function renderDetail(item, manifest) {
     ? `<section class="stage">
         <div class="stagebar">
           <span>交互演示（本站内嵌实跑）</span>
-          <a href="./${'demo/index.html'}" target="_blank" rel="noopener">全屏打开 ↗</a>
+          <a href="${demoHref}" target="_blank" rel="noopener">全屏打开 ↗</a>
         </div>
-        <iframe src="./demo/index.html" title="${esc(item.task)} 交互演示" loading="lazy"></iframe>
+        <iframe src="${demoHref}" title="${esc(item.task)} 交互演示" loading="lazy"></iframe>
       </section>`
     : `<section class="stage placeholder">
         <div class="stagebar"><span>交互演示</span></div>
