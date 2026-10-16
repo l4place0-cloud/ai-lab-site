@@ -3,9 +3,11 @@ name: Build and deploy site
 on:
   push:
     branches: [main]
-  # Rebuild when the content repository changes, and allow manual runs.
+  # The content repository sends this event when it changes, so the site
+  # rebuilds without polling. See tools/notify-site.ps1 in the content repo.
   repository_dispatch:
     types: [content-updated]
+  # Allows a manual rebuild from the Actions tab.
   workflow_dispatch:
 
 permissions:
@@ -24,19 +26,21 @@ jobs:
       - name: Checkout site
         uses: actions/checkout@v4
 
-      # The site is a consumer of the content repo, so check that out too.
-      - name: Checkout content repository
-        uses: actions/checkout@v4
-        with:
-          repository: l4place0/ai-lab
-          path: content
-          lfs: true
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Copy cover thumbnails
+      # The content repo is ~12 GB, almost all of it Git LFS media that the
+      # site never renders. Fetch only manifest.json plus the covers and demo
+      # entries the build actually reads; see src/fetch-content.mjs.
+      - name: Mirror the content repository
+        env:
+          CONTENT_REPO_SLUG: l4place0/ai-lab
+          CONTENT_REF: main
+          GITHUB_TOKEN: ${{ secrets.CONTENT_REPO_TOKEN || github.token }}
+        run: node src/fetch-content.mjs --out content
+
+      - name: Copy covers and embeddable demos
         env:
           CONTENT_REPO: ${{ github.workspace }}/content
         run: node src/covers.mjs
@@ -45,6 +49,13 @@ jobs:
         env:
           CONTENT_REPO: ${{ github.workspace }}/content
         run: node src/build.mjs
+
+      - name: Verify the build produced a site
+        run: |
+          test -f public/index.html || { echo "public/index.html missing"; exit 1; }
+          pages=$(find public/p -name '*.html' 2>/dev/null | wc -l)
+          echo "detail pages: $pages"
+          test "$pages" -gt 0 || { echo "no detail pages were generated"; exit 1; }
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

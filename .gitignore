@@ -3,9 +3,12 @@ node_modules/
 _snapshots/
 _shots/
 
-# The content repository is expected as a sibling checkout, not vendored here.
+# The content repository is expected as a sibling checkout or as a mirror
+# produced by src/fetch-content.mjs, never vendored here.
 ai-lab/
 ai-benchmark/
+content/
+content-*/
 
 .DS_Store
 Thumbs.db
